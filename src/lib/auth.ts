@@ -25,10 +25,13 @@ export type LoginInput = z.infer<typeof loginSchema>;
 
 // 生成JWT令牌
 export const generateToken = (userId: string): string => {
+  const secret = process.env.JWT_SECRET || 'your-secret-key';
+  const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
+  
   return sign(
     { userId },
-    process.env.JWT_SECRET || 'your-secret-key',
-    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+    secret,
+    { expiresIn: expiresIn as string }
   );
 };
 
@@ -41,7 +44,8 @@ export const verifyToken = async (token: string): Promise<string | null> => {
       return null;
     }
 
-    const decoded = verify(token, process.env.JWT_SECRET || 'your-secret-key') as { userId: string };
+    const secret = process.env.JWT_SECRET || 'your-secret-key';
+    const decoded = verify(token, secret) as { userId: string };
     return decoded.userId;
   } catch (error) {
     return null;
@@ -50,7 +54,8 @@ export const verifyToken = async (token: string): Promise<string | null> => {
 
 // 撤销JWT令牌
 export const revokeToken = async (token: string): Promise<void> => {
-  const decoded = verify(token, process.env.JWT_SECRET || 'your-secret-key') as { exp: number };
+  const secret = process.env.JWT_SECRET || 'your-secret-key';
+  const decoded = verify(token, secret) as { exp: number };
   const ttl = decoded.exp - Math.floor(Date.now() / 1000);
   
   if (ttl > 0) {
