@@ -1,44 +1,31 @@
 'use client';
 
+import { Container, Typography, Box, TextField, Button, Alert } from '@mui/material';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  Container,
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Alert,
-  Link,
-} from '@mui/material';
-import NextLink from 'next/link';
+import Link from 'next/link';
 
 export default function RegisterPage() {
   const router = useRouter();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setError('');
     setLoading(true);
 
-    const formData = new FormData(e.currentTarget);
+    const formData = new FormData(event.currentTarget);
     const name = formData.get('name') as string;
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
-    const confirmPassword = formData.get('confirmPassword') as string;
-
-    if (password !== confirmPassword) {
-      setError('两次输入的密码不一致');
-      setLoading(false);
-      return;
-    }
 
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ name, email, password }),
       });
 
@@ -48,9 +35,9 @@ export default function RegisterPage() {
         throw new Error(data.error || '注册失败');
       }
 
-      router.push('/auth/login?registered=true');
-    } catch (error) {
-      setError(error instanceof Error ? error.message : '注册失败，请重试');
+      router.push('/auth/login');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '注册失败');
     } finally {
       setLoading(false);
     }
@@ -60,23 +47,22 @@ export default function RegisterPage() {
     <Container maxWidth="sm">
       <Box
         sx={{
-          mt: 8,
+          minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
+          justifyContent: 'center',
+          py: 8,
         }}
       >
-        <Typography component="h1" variant="h5">
+        <Typography variant="h4" component="h1" gutterBottom align="center">
           注册
         </Typography>
-
         {error && (
-          <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
+          <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
-
-        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3, width: '100%' }}>
+        <Box component="form" onSubmit={handleSubmit} noValidate>
           <TextField
             margin="normal"
             required
@@ -92,7 +78,7 @@ export default function RegisterPage() {
             required
             fullWidth
             id="email"
-            label="邮箱"
+            label="邮箱地址"
             name="email"
             autoComplete="email"
           />
@@ -106,16 +92,6 @@ export default function RegisterPage() {
             id="password"
             autoComplete="new-password"
           />
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            name="confirmPassword"
-            label="确认密码"
-            type="password"
-            id="confirmPassword"
-            autoComplete="new-password"
-          />
           <Button
             type="submit"
             fullWidth
@@ -126,8 +102,10 @@ export default function RegisterPage() {
             {loading ? '注册中...' : '注册'}
           </Button>
           <Box sx={{ textAlign: 'center' }}>
-            <Link component={NextLink} href="/auth/login" variant="body2">
-              已有账号？立即登录
+            <Link href="/auth/login" passHref>
+              <Typography variant="body2" color="primary" sx={{ cursor: 'pointer' }}>
+                已有账号？立即登录
+              </Typography>
             </Link>
           </Box>
         </Box>

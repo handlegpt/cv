@@ -14,35 +14,40 @@ import {
 } from '@mui/material';
 import GoogleIcon from '@mui/icons-material/Google';
 import GitHubIcon from '@mui/icons-material/GitHub';
+import Link from 'next/link';
 
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setError('');
     setLoading(true);
 
-    const formData = new FormData(e.currentTarget);
+    const formData = new FormData(event.currentTarget);
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
     try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (result?.error) {
-        setError(result.error);
-      } else {
-        router.push('/resumes');
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '登录失败');
       }
-    } catch (error) {
-      setError('登录失败，请重试');
+
+      router.push('/resumes');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '登录失败');
     } finally {
       setLoading(false);
     }
@@ -52,29 +57,28 @@ export default function LoginPage() {
     <Container maxWidth="sm">
       <Box
         sx={{
-          mt: 8,
+          minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
+          justifyContent: 'center',
+          py: 8,
         }}
       >
-        <Typography component="h1" variant="h5">
+        <Typography variant="h4" component="h1" gutterBottom align="center">
           登录
         </Typography>
-
         {error && (
-          <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
+          <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
-
-        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3, width: '100%' }}>
+        <Box component="form" onSubmit={handleSubmit} noValidate>
           <TextField
             margin="normal"
             required
             fullWidth
             id="email"
-            label="邮箱"
+            label="邮箱地址"
             name="email"
             autoComplete="email"
             autoFocus
@@ -98,6 +102,13 @@ export default function LoginPage() {
           >
             {loading ? '登录中...' : '登录'}
           </Button>
+          <Box sx={{ textAlign: 'center' }}>
+            <Link href="/auth/register" passHref>
+              <Typography variant="body2" color="primary" sx={{ cursor: 'pointer' }}>
+                还没有账号？立即注册
+              </Typography>
+            </Link>
+          </Box>
         </Box>
 
         <Divider sx={{ width: '100%', my: 2 }}>或</Divider>
