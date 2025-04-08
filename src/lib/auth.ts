@@ -1,9 +1,9 @@
 import { compare, hash } from 'bcryptjs';
 import { sign, verify } from 'jsonwebtoken';
 import { z } from 'zod';
-import prisma from './prisma';
-import redis from './redis';
 import bcrypt from 'bcryptjs';
+import { prisma } from './prisma';
+import redis from './redis';
 
 // 用户注册验证模式
 export const registerSchema = z.object({
