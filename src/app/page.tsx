@@ -1,45 +1,41 @@
-import { Button, Container, Typography, Box } from '@mui/material';
-import Link from 'next/link';
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
-export default function Home() {
+export default async function Home() {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    redirect("/auth/login");
+  }
+
   return (
-    <Container maxWidth="md">
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          textAlign: 'center',
-          py: 8,
-        }}
-      >
-        <Typography variant="h2" component="h1" gutterBottom>
-          智能简历系统
-        </Typography>
-        <Typography variant="h5" color="text.secondary" paragraph>
-          使用 AI 技术，轻松创建专业简历
-        </Typography>
-        <Box sx={{ mt: 4, display: 'flex', gap: 2 }}>
-          <Button
-            component={Link}
-            href="/auth/register"
-            variant="contained"
-            size="large"
-          >
-            立即注册
-          </Button>
-          <Button
-            component={Link}
-            href="/auth/login"
-            variant="outlined"
-            size="large"
-          >
-            登录
-          </Button>
-        </Box>
-      </Box>
-    </Container>
+    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm">
+        <h1 className="text-4xl font-bold mb-8">欢迎使用智能简历系统</h1>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="p-6 border rounded-lg shadow-sm">
+            <h2 className="text-2xl font-semibold mb-4">我的简历</h2>
+            <p className="text-gray-600 mb-4">创建和管理您的专业简历</p>
+            <a
+              href="/resumes"
+              className="inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            >
+              查看简历
+            </a>
+          </div>
+          <div className="p-6 border rounded-lg shadow-sm">
+            <h2 className="text-2xl font-semibold mb-4">AI 助手</h2>
+            <p className="text-gray-600 mb-4">使用 AI 优化您的简历内容</p>
+            <a
+              href="/ai-assistant"
+              className="inline-block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+            >
+              开始使用
+            </a>
+          </div>
+        </div>
+      </div>
+    </main>
   );
 } 
