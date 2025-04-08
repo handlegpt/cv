@@ -9,20 +9,12 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/resume
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/resume_db?schema=public
       - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=your-jwt-secret
       - NEXTAUTH_URL=http://localhost:3000
-      - NEXTAUTH_SECRET=your-nextauth-secret
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
-      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
-      - SMTP_HOST=${SMTP_HOST}
-      - SMTP_PORT=${SMTP_PORT}
-      - SMTP_USER=${SMTP_USER}
-      - SMTP_PASSWORD=${SMTP_PASSWORD}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - NEXTAUTH_SECRET=your-secret-key
+      - JWT_SECRET=your-jwt-secret
+      - JWT_EXPIRES_IN=7d
     depends_on:
       - db
       - redis
@@ -37,7 +29,7 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=resume
+      - POSTGRES_DB=resume_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -47,7 +39,7 @@ services:
       retries: 5
 
   redis:
-    image: redis:alpine
+    image: redis:7-alpine
     volumes:
       - redis_data:/data
     healthcheck:
