@@ -3,19 +3,23 @@ import { sign, verify } from 'jsonwebtoken';
 import { z } from 'zod';
 import prisma from './prisma';
 import redis from './redis';
+import bcrypt from 'bcryptjs';
 
 // 用户注册验证模式
 export const registerSchema = z.object({
+  name: z.string().min(2, '姓名至少需要2个字符'),
   email: z.string().email('请输入有效的邮箱地址'),
-  password: z.string().min(8, '密码至少需要8个字符'),
-  name: z.string().optional(),
+  password: z.string().min(6, '密码至少需要6个字符'),
 });
 
 // 用户登录验证模式
 export const loginSchema = z.object({
   email: z.string().email('请输入有效的邮箱地址'),
-  password: z.string(),
+  password: z.string().min(1, '请输入密码'),
 });
+
+export type RegisterInput = z.infer<typeof registerSchema>;
+export type LoginInput = z.infer<typeof loginSchema>;
 
 // 生成JWT令牌
 export const generateToken = (userId: string): string => {
@@ -53,61 +57,37 @@ export const revokeToken = async (token: string): Promise<void> => {
 };
 
 // 注册新用户
-export const registerUser = async (data: z.infer<typeof registerSchema>) => {
-  const { email, password, name } = data;
+export async function registerUser(data: RegisterInput) {
+  const hashedPassword = await bcrypt.hash(data.password, 10);
   
-  // 检查邮箱是否已存在
-  const existingUser = await prisma.user.findUnique({
-    where: { email },
-  });
-  
-  if (existingUser) {
-    throw new Error('该邮箱已被注册');
-  }
-  
-  // 哈希密码
-  const hashedPassword = await hash(password, 10);
-  
-  // 创建用户
   const user = await prisma.user.create({
     data: {
-      email,
+      name: data.name,
+      email: data.email,
       password: hashedPassword,
-      name,
     },
   });
-  
-  // 生成令牌
-  const token = generateToken(user.id);
-  
-  return { user, token };
-};
+
+  return user;
+}
 
 // 用户登录
-export const loginUser = async (data: z.infer<typeof loginSchema>) => {
-  const { email, password } = data;
-  
-  // 查找用户
+export async function validateUser(email: string, password: string) {
   const user = await prisma.user.findUnique({
     where: { email },
   });
-  
+
   if (!user) {
-    throw new Error('用户不存在');
+    return null;
   }
-  
-  // 验证密码
-  const isValid = await compare(password, user.password);
-  
+
+  const isValid = await bcrypt.compare(password, user.password);
   if (!isValid) {
-    throw new Error('密码错误');
+    return null;
   }
-  
-  // 生成令牌
-  const token = generateToken(user.id);
-  
-  return { user, token };
-};
+
+  return user;
+}
 
 // 获取当前用户
 export const getCurrentUser = async (token: string) => {

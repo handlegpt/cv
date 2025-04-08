@@ -1,23 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { registerUser, registerSchema } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import bcrypt from 'bcryptjs';
-import { z } from 'zod';
-
-const registerSchema = z.object({
-  name: z.string().min(2, '姓名至少需要2个字符'),
-  email: z.string().email('请输入有效的邮箱地址'),
-  password: z.string().min(6, '密码至少需要6个字符'),
-});
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, password } = registerSchema.parse(body);
+    const validatedData = registerSchema.parse(body);
 
     // 检查邮箱是否已存在
     const existingUser = await prisma.user.findUnique({
-      where: { email },
+      where: { email: validatedData.email },
     });
 
     if (existingUser) {
@@ -27,32 +19,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 加密密码
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await registerUser(validatedData);
 
-    // 创建用户
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
+    return NextResponse.json(
+      { 
+        message: '注册成功',
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        }
       },
-    });
-
-    // 返回用户信息（不包含密码）
-    const { password: _, ...userWithoutPassword } = user;
-    return NextResponse.json(userWithoutPassword);
+      { status: 201 }
+    );
   } catch (error) {
-    if (error instanceof z.ZodError) {
+    if (error instanceof Error) {
       return NextResponse.json(
-        { error: error.errors[0].message },
+        { error: error.message },
         { status: 400 }
       );
     }
-
-    console.error('注册失败:', error);
     return NextResponse.json(
-      { error: '注册失败，请重试' },
+      { error: '注册失败' },
       { status: 500 }
     );
   }
