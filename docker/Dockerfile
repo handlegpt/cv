@@ -10,13 +10,18 @@ RUN apk add --no-cache \
     make \
     g++ \
     postgresql-client \
-    openssl
+    openssl \
+    git
+
+# 设置环境变量
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 
 # 复制package.json和package-lock.json
 COPY package*.json ./
 
-# 安装依赖
-RUN npm install @prisma/client @auth/prisma-adapter next-auth bcryptjs jsonwebtoken @mui/material @emotion/react @emotion/styled @mui/icons-material i18next react-i18next openai zod @types/node @types/react @types/react-dom @types/bcryptjs
+# 安装所有依赖
+RUN npm install
 
 # 复制项目文件
 COPY . .
