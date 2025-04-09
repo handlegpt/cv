@@ -7,6 +7,7 @@ import redis from './redis';
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import { JWT } from 'next-auth/jwt';
 
 // 用户注册验证模式
 export const registerSchema = z.object({
@@ -137,18 +138,18 @@ export const authOptions: NextAuthOptions = {
     strategy: 'jwt',
   },
   pages: {
-    signIn: '/auth/login',
+    signIn: '/login',
   },
   providers: [
     CredentialsProvider({
       name: 'credentials',
       credentials: {
-        email: { label: "邮箱", type: "email" },
-        password: { label: "密码", type: "password" },
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("请输入邮箱和密码");
+          throw new Error('请输入邮箱和密码');
         }
 
         const user = await prisma.user.findUnique({
@@ -158,16 +159,13 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user) {
-          throw new Error("用户不存在");
+          throw new Error('用户不存在');
         }
 
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
+        const isPasswordValid = await compare(credentials.password, user.password);
 
         if (!isPasswordValid) {
-          throw new Error("密码错误");
+          throw new Error('密码错误');
         }
 
         return {
@@ -179,17 +177,33 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async session({ session, token }) {
+    async session({ token, session }) {
       if (token) {
         session.user.id = token.id;
+        session.user.name = token.name;
+        session.user.email = token.email;
       }
       return session;
     },
     async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
+      const dbUser = await prisma.user.findFirst({
+        where: {
+          email: token.email,
+        },
+      });
+
+      if (!dbUser) {
+        if (user) {
+          token.id = user?.id;
+        }
+        return token;
       }
-      return token;
+
+      return {
+        id: dbUser.id,
+        name: dbUser.name,
+        email: dbUser.email,
+      };
     },
   },
 }; 
