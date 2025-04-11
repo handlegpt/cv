@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import { SessionProvider } from '@/components/SessionProvider';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -9,15 +12,19 @@ export const metadata: Metadata = {
   description: '一个现代化的简历管理系统',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await getServerSession(authOptions);
+
   return (
     <html lang="zh">
       <body className={inter.className}>
-        {children}
+        <SessionProvider session={session}>
+          {children}
+        </SessionProvider>
       </body>
     </html>
   );
