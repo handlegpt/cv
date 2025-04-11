@@ -12,9 +12,6 @@ const nextConfig = {
     MAIN_DOMAIN: process.env.MAIN_DOMAIN,
   },
   output: 'standalone',
-  experimental: {
-    serverActions: true,
-  },
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
