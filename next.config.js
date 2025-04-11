@@ -22,6 +22,11 @@ const nextConfig = {
         crypto: false,
       };
     }
+    // 添加额外的别名配置
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': require('path').resolve(__dirname, 'src'),
+    };
     return config;
   },
   // 禁用 Edge Runtime 警告
